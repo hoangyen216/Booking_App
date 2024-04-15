@@ -16,7 +16,7 @@ app.use(CookieParser());
 
 app.use(cors({
     credentials: true,
-    
+
     origin: 'http://localhost:5173',
 
 }));
@@ -25,6 +25,12 @@ mongoose.connect(process.env.MONGO_URL);
 
 app.get('/test', (req, res) => {
     res.json('test ok');
+    
+});
+
+app.get('/test1', (req, res) => {
+    res.json('test ok');
+    
 });
 
 app.post('/register', async (req, res) => {
