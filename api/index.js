@@ -19,19 +19,13 @@ const app = express();
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = 'ajdhfhjhvdfie';
 
-//trích xuất dữ liệu JSON từ request body và 
-//chuyển đổi thành đối tượng JavaScript
+//cho phép các yêu cầu AJAX từ http://localhost:5173 
+//truy cập tài nguyên trên máy chủ 
 app.use(express.json());
-//chuyển đổi cookies thành đối tượng JavaScript
 app.use(CookieParser());
-
-//middleware này sẽ tìm file tương ứng trong thư mục 
-//uploads và gửi response cho client
 app.use('/uploads', express.static(__dirname + '/uploads'));
 //passMongodb: Oe9Q6isfBxpws8GP
 
-//cho phép các yêu cầu AJAX từ http://localhost:5173 
-//truy cập tài nguyên trên máy chủ 
 app.use(cors({
     credentials: true,
     origin: 'http://localhost:5173',
@@ -138,3 +132,36 @@ app.get('/places/:id', async (req, res) => {
 
 app.listen(4000);
 
+function getUserDataFromReq(req) {
+    return new Promise((resolve, reject) => {
+        // trả về dữ liệu người dùng nếu xác thực token thành công
+        jwt.verify(req.cookies.token, jwtSecret, {}, async (err, userData) => {
+            if (err) throw err;
+            resolve(userData);
+        });
+    });
+}
+
+app.post('/bookings', async (req, res) => {
+    const userData = await getUserDataFromReq(req);
+    const {
+        place, checkIn, checkOut, numberOfGuests, name, phone, price,
+    } = req.body;
+    Booking.create({
+        place, checkIn, checkOut, numberOfGuests, name, phone, price,
+        user: userData.id,
+    }).then((doc) => {
+        res.json(doc);
+    }).catch((err) => {
+        throw err;
+    });
+});
+
+app.get('/bookings', async (req, res) => {
+    const userData = await getUserDataFromReq(req);
+    // kết quả trả về bao gồm các phòng được đặt bởi người dùng 
+    //phương thức populate trong Mongoose để nạp thêm dữ liệu từ một collection liên quan khác 
+    res.json(await Booking.find({ user: userData.id }).populate('place'));
+});
+
+app.listen(4000);
