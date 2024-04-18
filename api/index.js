@@ -54,4 +54,11 @@ app.post('/bookings', async (req, res) => {
     });
 });
 
+app.get('/bookings', async (req, res) => {
+    const userData = await getUserDataFromReq(req);
+    // kết quả trả về bao gồm các phòng được đặt bởi người dùng 
+    //phương thức populate trong Mongoose để nạp thêm dữ liệu từ một collection liên quan khác 
+    res.json(await Booking.find({ user: userData.id }).populate('place'));
+});
+
 app.listen(4000);
